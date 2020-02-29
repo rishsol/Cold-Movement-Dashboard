@@ -13,6 +13,7 @@ import plotly.express as px
 import plotly.tools as tls
 import plotly.graph_objs as go
 import statistics
+from sklearn.preprocessing import Normalizer
 
 app = dash.Dash(__name__)
 
@@ -118,22 +119,32 @@ df_organized_angle_data = pandas.DataFrame()
 df_organized_angle_data['X Angle'] = pandas.Series(dsXList)
 df_organized_angle_data['Y Angle'] = pandas.Series(dsYList)
 df_organized_angle_data['Z Angle'] = pandas.Series(dsZList)
-df_organized_angle_data['Reading No.'] = pandas.Series(list(range(len(df_organized_angle_data))))
+df_organized_angle_data['Time'] = pandas.Series(list(range(len(df_organized_angle_data))))
+
+stable_meanx = df_organized_angle_data['X Angle'].mean()
+stable_sdx = statistics.stdev(df_organized_angle_data['X Angle'])
+
+stable_meany = df_organized_angle_data['Y Angle'].mean()
+stable_sdy = statistics.stdev(df_organized_angle_data['Y Angle'])
+
+stable_meanz = df_organized_angle_data['Z Angle'].mean()
+stable_sdz = statistics.stdev(df_organized_angle_data['Z Angle'])
+
 
 fig2 = go.Figure()
-fig2.add_trace(go.Scatter(x=df_organized_angle_data['Reading No.'], y=df_organized_angle_data['X Angle'],
-                    mode='lines',
+fig2.add_trace(go.Scatter(x=0.5 * df_organized_angle_data['Time'], y=df_organized_angle_data['X Angle'],
+                    mode='lines+markers',
                     name='X Angle'))
-fig2.add_trace(go.Scatter(x=df_organized_angle_data['Reading No.'], y=df_organized_angle_data['Y Angle'],
+fig2.add_trace(go.Scatter(x=0.5 * df_organized_angle_data['Time'], y=df_organized_angle_data['Y Angle'],
                     mode='lines',
                     name='Y Angle'))
-fig2.add_trace(go.Scatter(x=df_organized_angle_data['Reading No.'], y=df_organized_angle_data['Z Angle'],
-mode='lines',
+fig2.add_trace(go.Scatter(x=0.5 * df_organized_angle_data['Time'], y=df_organized_angle_data['Z Angle'],
+mode='lines+markers',
 name='Z Angle'))
 
 fig2.update_layout(
 title= 'Stable Angle',
-xaxis_title='Reading No.',
+xaxis_title='Time (secs)',
 yaxis_title='Angle (degrees)'
 )
 
@@ -159,6 +170,7 @@ df_angletilt.drop('index', axis=1, inplace=True)
 dsXListTilt1 = []
 dsYListTilt1 = []
 dsZListTilt1 = []
+dsTimeTilt1 = [0]
 
 for i in range(0, len(df_angletilt)):
     if (not isinstance(df_angletilt['Tilt 1'][i], float)):
@@ -177,20 +189,46 @@ df_angletilt_revised1['X Angle'] = pandas.Series(dsXListTilt1)
 df_angletilt_revised1['Y Angle'] = pandas.Series(dsYListTilt1)
 df_angletilt_revised1['Z Angle'] = pandas.Series(dsZListTilt1)
 
+list_to_append1 = list(range(2, len(df_angletilt_revised1) + 1) )
+dsTimeTilt1 = dsTimeTilt1 + list_to_append1
+
+df_angletilt_revised1['Time'] =  pandas.Series(dsTimeTilt1)
+
+color_x1 = ['blue',] * len(df_angletilt_revised1['X Angle'])
+color_y1 = ['red',] * len(df_angletilt_revised1['Y Angle'])
+color_z1 = ['green',] * len(df_angletilt_revised1['Z Angle'])
+
+for i in range(len(df_angletilt_revised1)):
+    if (stable_meanx + (4 * stable_sdx) <= df_angletilt_revised1['X Angle'][i] or
+    stable_meanx - (4 * stable_sdx) >= df_angletilt_revised1['X Angle'][i]):
+        color_x1[i] = 'black'
+
+    if (stable_meany + (4 * stable_sdy) <= df_angletilt_revised1['Y Angle'][i] or
+    stable_meany - (4 * stable_sdy) >= df_angletilt_revised1['Y Angle'][i]):
+        color_y1[i] = 'black'
+    
+    if (stable_meanz + (4 * stable_sdz) <= df_angletilt_revised1['Z Angle'][i] or
+    stable_meanz - (4 * stable_sdz) >= df_angletilt_revised1['Z Angle'][i]):
+        color_z1[i] = 'black'
+
+
 fig4 = go.Figure()
-fig4.add_trace(go.Scatter(x=df_organized_angle_data['Reading No.'], y=df_angletilt_revised1['X Angle'],
-                    mode='lines',
-                    name='X Angle'))
-fig4.add_trace(go.Scatter(x=df_organized_angle_data['Reading No.'], y=df_angletilt_revised1['Y Angle'],
-                    mode='lines',
-                    name='Y Angle'))
-fig4.add_trace(go.Scatter(x=df_organized_angle_data['Reading No.'], y=df_angletilt_revised1['Z Angle'],
-mode='lines',
-name='Z Angle'))
+fig4.add_trace(go.Scatter(x=0.5 * df_angletilt_revised1['Time'], y=df_angletilt_revised1['X Angle'],
+                    mode='lines+markers',
+                    name='X Angle', 
+                    marker_color = color_x1))
+fig4.add_trace(go.Scatter(x=0.5 * df_angletilt_revised1['Time'], y=df_angletilt_revised1['Y Angle'],
+                    mode='lines+markers',
+                    name='Y Angle',
+                    marker_color= color_y1))
+fig4.add_trace(go.Scatter(x=0.5 * df_angletilt_revised1['Time'], y=df_angletilt_revised1['Z Angle'],
+mode='lines+markers',
+name='Z Angle', 
+marker_color=color_z1))
 
 fig4.update_layout(
 title= 'Tilt1',
-xaxis_title='Reading No.',
+xaxis_title='Time (secs)',
 yaxis_title='Angle (degrees)'
 )
 
@@ -215,21 +253,43 @@ df_angletilt_revised2 = pandas.DataFrame()
 df_angletilt_revised2['X Angle'] = pandas.Series(dsXListTilt2)
 df_angletilt_revised2['Y Angle'] = pandas.Series(dsYListTilt2)
 df_angletilt_revised2['Z Angle'] = pandas.Series(dsZListTilt2)
+df_angletilt_revised2['Time'] = pandas.Series(dsTimeTilt1 + [30, 31, 32])
+
+color_x2 = ['blue',] * len(df_angletilt_revised2['X Angle'])
+color_y2 = ['red',] * len(df_angletilt_revised2['Y Angle'])
+color_z2 = ['green',] * len(df_angletilt_revised2['Z Angle'])
+
+for i in range(len(df_angletilt_revised2)):
+    if (stable_meanx + (4 * stable_sdx) <= df_angletilt_revised2['X Angle'][i] or
+    stable_meanx - (4 * stable_sdx) >= df_angletilt_revised2['X Angle'][i]):
+        color_x2[i] = 'black'
+
+    if (stable_meany + (4 * stable_sdy) <= df_angletilt_revised2['Y Angle'][i] or
+    stable_meany - (4 * stable_sdy) >= df_angletilt_revised2['Y Angle'][i]):
+        color_y2[i] = 'black'
+    
+    if (stable_meanz + (4 * stable_sdz) <= df_angletilt_revised2['Z Angle'][i] or
+    stable_meanz - (4 * stable_sdz) >= df_angletilt_revised2['Z Angle'][i]):
+        color_z2[i] = 'black'
+
 
 fig5 = go.Figure()
-fig5.add_trace(go.Scatter(x=df_organized_angle_data['Reading No.'], y=df_angletilt_revised2['X Angle'],
+fig5.add_trace(go.Scatter(x=0.5 * df_angletilt_revised2['Time'], y=df_angletilt_revised2['X Angle'],
                     mode='lines+markers',
-                    name='X Angle'))
-fig5.add_trace(go.Scatter(x=df_organized_angle_data['Reading No.'], y=df_angletilt_revised2['Y Angle'],
+                    name='X Angle',
+                    marker_color=color_x2))
+fig5.add_trace(go.Scatter(x=0.5 * df_angletilt_revised2['Time'], y=df_angletilt_revised2['Y Angle'],
                     mode='lines+markers',
-                    name='Y Angle'))
-fig5.add_trace(go.Scatter(x=df_organized_angle_data['Reading No.'], y=df_angletilt_revised2['Z Angle'],
+                    name='Y Angle',
+                    marker_color=color_y2))
+fig5.add_trace(go.Scatter(x=0.5 * df_angletilt_revised2['Time'], y=df_angletilt_revised2['Z Angle'],
 mode='lines+markers',
-name='Z Angle'))
+name='Z Angle',
+marker_color=color_z2))
 
 fig5.update_layout(
 title= 'Tilt2',
-xaxis_title='Reading No.',
+xaxis_title='Time (secs)',
 yaxis_title='Angle (degrees)'
 )
                     
@@ -275,9 +335,11 @@ moving_median_sd = statistics.stdev(df_accelerometer_data['Moving Median'][0:662
 
 colorsAcc= ['green',] * len(df_accelerometer_data)
 
+moving_mean_sd = statistics.stdev(df_accelerometer_data['Moving Average'][0:662])
+moving_mean_mean = statistics.mean(df_accelerometer_data['Moving Average'][0:662])
 for i in range(len(colorsAcc) - 1):
-    if (abs(df_accelerometer_data['Moving Average'][i] - df_accelerometer_data['Moving Average'][i + 1]) > 0.01):
-        colorsAcc[i + 1] = 'red'
+    if abs(df_accelerometer_data['Moving Average'][i] - df_accelerometer_data['Moving Average'][i+1]) > 0.01:
+        colorsAcc[i] = 'red'
 
 fig6 = go.Figure()
 fig6.add_trace(go.Scatter(y=df_accelerometer_data['Y Acc.'],
@@ -303,12 +365,20 @@ xaxis_title='Reading No.',
 yaxis_title='Acceleration'
 )
 
-
-
                       ########################
                             
 app.layout = html.Div(children=[
     html.H1(children='Demo'),
+    dcc.Slider(
+        id='status_bar', 
+        min = 0,
+        max = 0.5 * df_angletilt_revised1['Time'][len(df_angletilt_revised1) -1],
+        step=1,
+        value=0
+    ),
+    html.Div(
+        id='slider-output-container'
+    ),
     dcc.Graph(
         id = 'double-temp-graph',
         figure = fig3
@@ -334,6 +404,42 @@ app.layout = html.Div(children=[
         figure = fig6
     )
 ])
+
+@app.callback(
+    dash.dependencies.Output('slider-output-container', 'children'),
+    [dash.dependencies.Input('status_bar', 'value')])
+def update_output(value):
+    temperature = abs((df_temp_data['Reading No.'][value] - TEMP_DIFF_MEAN)/sdTemp)
+
+    normalized_temp = pandas.Series(df_temp_data['Object Temperature'] - df_temp_data['Ambient Temperature'])
+
+    normalized_anglex = pandas.Series(df_angletilt_revised1['X Angle'])
+    normalized_angley = pandas.Series(df_angletilt_revised1['X Angle'])
+    normalized_anglez = pandas.Series(df_angletilt_revised1['X Angle'])
+    normalized_avg_angle = (normalized_anglex + normalized_angley + normalized_angley)/3
+
+    normalized_acc = pandas.Series(df_accelerometer_data['Magnitude'])
+
+    normalized_temp = normalized_temp.to_numpy().reshape(1,-1)
+    norm = Normalizer().fit(normalized_temp)
+    normalized_temp = norm.transform(normalized_temp)[0]
+    
+    normalized_avg_angle = normalized_avg_angle.to_numpy().reshape(1,-1)
+    norm = Normalizer().fit(normalized_avg_angle)
+    normalized_avg_angle = norm.transform(normalized_avg_angle)[0]
+
+    normalized_acc = normalized_acc.to_numpy().reshape(1,-1)
+    norm = Normalizer().fit(normalized_acc)
+    normalized_acc = norm.transform(normalized_acc)[0]
+
+    angle_sd = (stable_sdx + stable_sdy + stable_sdz)/3
+    angle_avg = (normalized_avg_angle[value] + normalized_avg_angle[value] + normalized_avg_angle[value])/3
+    stable_mean_avg = (stable_meanx + stable_meany + stable_meanz)/3
+    titl1_angle = abs((angle_avg - stable_mean_avg) / angle_sd)
+
+    acceleration = abs((normalized_acc[value] - moving_mean_mean)/moving_mean_sd)
+
+    return (titl1_angle + acceleration + temperature)/3
 
 if __name__ == '__main__':
     app.run_server(debug=True)
