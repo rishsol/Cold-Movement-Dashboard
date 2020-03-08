@@ -58,28 +58,28 @@ for i in range(len(colors)):
         colors[i] = 'red'
     
 fig1 = go.Figure(data=[go.Bar(
-    x=df_temp_data['Reading No.'],
+    x=0.5 * df_temp_data['Reading No.'],
     y=ds_temp_difference,
     marker_color=colors
 )])
 
 fig1.update_layout(
 title= 'Difference in Object and Ambient Temperature over time',
-xaxis_title='Reading No.',
+xaxis_title='Time (secs)',
 yaxis_title='Temperature (*F)'
 )
 
 fig3 = go.Figure()
-fig3.add_trace(go.Scatter(x=df_temp_data['Reading No.'], y=df_temp_data['Ambient Temperature'],
+fig3.add_trace(go.Scatter(x=0.5 * df_temp_data['Reading No.'], y=df_temp_data['Ambient Temperature'],
                     mode='lines',
                     name='Ambient Temperature'))
-fig3.add_trace(go.Scatter(x=df_temp_data['Reading No.'], y=df_temp_data['Object Temperature'],
+fig3.add_trace(go.Scatter(x=0.5 * df_temp_data['Reading No.'], y=df_temp_data['Object Temperature'],
                     mode='lines',
                     name='Object Temperature'))
                     
 fig3.update_layout(
 title= 'Ambient vs Object Temperature over time',
-xaxis_title='Reading No.',
+xaxis_title='Time (secs)',
 yaxis_title='Temperature (*F)'
 )
                     
@@ -342,26 +342,31 @@ for i in range(len(colorsAcc) - 1):
         colorsAcc[i] = 'red'
 
 fig6 = go.Figure()
-fig6.add_trace(go.Scatter(y=df_accelerometer_data['Y Acc.'],
+fig6.add_trace(go.Scatter(x = 0.5 * pandas.Series(range(len(df_accelerometer_data['Y Acc.']))),
+                    y=df_accelerometer_data['Y Acc.'],
                     mode='lines',
                     name='Y Acc.'))
-fig6.add_trace(go.Scatter(y=df_accelerometer_data['X Acc.'],
+fig6.add_trace(go.Scatter(x= 0.5 * pandas.Series(range(len(df_accelerometer_data['Y Acc.']))),
+                    y=df_accelerometer_data['X Acc.'],
                     mode='lines',
                     name='X Acc. '))
-fig6.add_trace(go.Scatter(y=df_accelerometer_data['Magnitude'],
+fig6.add_trace(go.Scatter(x = 0.5 * pandas.Series(range(len(df_accelerometer_data['Y Acc.']))),
+                    y=df_accelerometer_data['Magnitude'],
                     mode='lines+markers',
                     name='Magnitude',
                     marker_color= colorsAcc))
-fig6.add_trace(go.Scatter(y=df_accelerometer_data['Moving Median'],
+fig6.add_trace(go.Scatter(x = 0.5 * pandas.Series(range(len(df_accelerometer_data['Y Acc.']))),
+                    y=df_accelerometer_data['Moving Median'],
                     mode = 'lines',
                     name = 'Moving Median'))
-fig6.add_trace(go.Scatter(y=df_accelerometer_data['Moving Average'],
+fig6.add_trace(go.Scatter(x = 0.5 * pandas.Series(range(len(df_accelerometer_data['Y Acc.']))), 
+                    y=df_accelerometer_data['Moving Average'],
                     mode = 'lines',
                     name = 'Moving Average'))
 
 fig6.update_layout(
 title= 'Acceleration over time',
-xaxis_title='Reading No.',
+xaxis_title='Time (secs)',
 yaxis_title='Acceleration'
 )
 
@@ -374,7 +379,7 @@ app.layout = html.Div(children=[
         min = 0,
         max = 0.5 * df_angletilt_revised1['Time'][len(df_angletilt_revised1) -1],
         step=1,
-        value=0
+        value=0,
     ),
     html.Div(
         id='slider-output-container'
@@ -409,37 +414,43 @@ app.layout = html.Div(children=[
     dash.dependencies.Output('slider-output-container', 'children'),
     [dash.dependencies.Input('status_bar', 'value')])
 def update_output(value):
-    temperature = abs((df_temp_data['Reading No.'][value] - TEMP_DIFF_MEAN)/sdTemp)
+    temp_diff = df_temp_data['Object Temperature'] - df_temp_data['Ambient Temperature']
+    temp_diff_mean = statistics.mean(temp_diff)
+    temp_diff_sd = statistics.stdev(temp_diff)
 
-    normalized_temp = pandas.Series(df_temp_data['Object Temperature'] - df_temp_data['Ambient Temperature'])
+    temperature = (temp_diff[value] - temp_diff_mean) / temp_diff_sd
 
-    normalized_anglex = pandas.Series(df_angletilt_revised1['X Angle'])
-    normalized_angley = pandas.Series(df_angletilt_revised1['X Angle'])
-    normalized_anglez = pandas.Series(df_angletilt_revised1['X Angle'])
-    normalized_avg_angle = (normalized_anglex + normalized_angley + normalized_angley)/3
+    avg_angle_meanx = statistics.mean(df_angletilt_revised1['X Angle'])
+    avg_angle_sdx = statistics.stdev(df_angletilt_revised1['X Angle'])
 
-    normalized_acc = pandas.Series(df_accelerometer_data['Magnitude'])
+    tilt1_anglex = (abs(avg_angle_meanx - df_angletilt_revised1['X Angle'][value])) / avg_angle_sdx
 
-    normalized_temp = normalized_temp.to_numpy().reshape(1,-1)
-    norm = Normalizer().fit(normalized_temp)
-    normalized_temp = norm.transform(normalized_temp)[0]
-    
-    normalized_avg_angle = normalized_avg_angle.to_numpy().reshape(1,-1)
-    norm = Normalizer().fit(normalized_avg_angle)
-    normalized_avg_angle = norm.transform(normalized_avg_angle)[0]
+    avg_angle_meany = statistics.mean(df_angletilt_revised1['Y Angle'])
+    avg_angle_sdy = statistics.stdev(df_angletilt_revised1['Y Angle'])
 
-    normalized_acc = normalized_acc.to_numpy().reshape(1,-1)
-    norm = Normalizer().fit(normalized_acc)
-    normalized_acc = norm.transform(normalized_acc)[0]
+    tilt1_angley = (abs(avg_angle_meany - df_angletilt_revised1['Y Angle'][value])) / avg_angle_sdy
 
-    angle_sd = (stable_sdx + stable_sdy + stable_sdz)/3
-    angle_avg = (normalized_avg_angle[value] + normalized_avg_angle[value] + normalized_avg_angle[value])/3
-    stable_mean_avg = (stable_meanx + stable_meany + stable_meanz)/3
-    titl1_angle = abs((angle_avg - stable_mean_avg) / angle_sd)
+    avg_angle_meanz= statistics.mean(df_angletilt_revised1['Z Angle'])
+    avg_angle_sdz = statistics.stdev(df_angletilt_revised1['Z Angle'])
 
-    acceleration = abs((normalized_acc[value] - moving_mean_mean)/moving_mean_sd)
+    tilt1_anglez = (abs(avg_angle_meanz - df_angletilt_revised1['Z Angle'][value])) / avg_angle_sdz
 
-    return (titl1_angle + acceleration + temperature)/3
+    acc_avg = statistics.mean(df_accelerometer_data['Magnitude'])
+    acc_sd = statistics.stdev(df_accelerometer_data['Magnitude'])
+
+    acceleration = (abs(acc_avg - df_accelerometer_data['Magnitude'][value])) / acc_sd
+
+    if temperature > 1:
+        total = (0.5 * temperature) + (0.16 * tilt1_anglex) + (0.16 * tilt1_angley) + (0.16 * tilt1_anglez) + (0.02 * acceleration)
+    else:
+        total = (0.5 * 0) + (0.16 * tilt1_anglex) + (0.16 * tilt1_angley) + (0.16 * tilt1_anglez) + (0.02 * acceleration)
+
+    if total < 0.4:
+        return str(value) + ' seconds: Poor condition'
+    elif total < 0.55:
+        return str(value) + ' seconds: Fair condition'
+    else:
+        return str(value) + ' seconds: Good condition'
 
 if __name__ == '__main__':
     app.run_server(debug=True)
