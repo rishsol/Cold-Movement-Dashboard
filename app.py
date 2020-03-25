@@ -371,7 +371,92 @@ yaxis_title='Acceleration'
 )
 
                       ########################
-                            
+#weighted average of temperature, acceleration, angle metrics to determine condition in transport
+def condition_graph(value):
+    temp_diff = df_temp_data['Object Temperature'] - df_temp_data['Ambient Temperature']
+    temp_diff_mean = statistics.mean(temp_diff)
+    temp_diff_sd = statistics.stdev(temp_diff)
+
+    temperature = (temp_diff[value] - temp_diff_mean) / temp_diff_sd
+
+    avg_angle_meanx = statistics.mean(df_angletilt_revised1['X Angle'])
+    avg_angle_sdx = statistics.stdev(df_angletilt_revised1['X Angle'])
+
+    tilt1_anglex = (abs(avg_angle_meanx - df_angletilt_revised1['X Angle'][value])) / avg_angle_sdx
+
+    avg_angle_meany = statistics.mean(df_angletilt_revised1['Y Angle'])
+    avg_angle_sdy = statistics.stdev(df_angletilt_revised1['Y Angle'])
+
+    tilt1_angley = (abs(avg_angle_meany - df_angletilt_revised1['Y Angle'][value])) / avg_angle_sdy
+
+    avg_angle_meanz= statistics.mean(df_angletilt_revised1['Z Angle'])
+    avg_angle_sdz = statistics.stdev(df_angletilt_revised1['Z Angle'])
+
+    tilt1_anglez = (abs(avg_angle_meanz - df_angletilt_revised1['Z Angle'][value])) / avg_angle_sdz
+
+    acc_avg = statistics.mean(df_accelerometer_data['Magnitude'])
+    acc_sd = statistics.stdev(df_accelerometer_data['Magnitude'])
+
+    acceleration = (abs(acc_avg - df_accelerometer_data['Magnitude'][value])) / acc_sd
+
+    if temperature > 1:
+        total = (0.5 * temperature) + (0.16 * tilt1_anglex) + (0.16 * tilt1_angley) + (0.16 * tilt1_anglez) + (0.02 * acceleration)
+    else:
+        total = (0.5 * 0) + (0.16 * tilt1_anglex) + (0.16 * tilt1_angley) + (0.16 * tilt1_anglez) + (0.02 * acceleration)
+    
+    return total
+
+totals = []
+for data in range(int(0.5 * df_angletilt_revised1['Time'][len(df_angletilt_revised1) -1] + 1)):
+    totals.append(condition_graph(data))
+
+fig7 = go.Figure()
+fig7.add_trace(go.Scatter(
+    x = list(range(int(0.5 * df_angletilt_revised1['Time'][len(df_angletilt_revised1) -1] + 1))),
+                    y= totals,
+                    mode='lines',
+                    name='Condition of Travel'
+))
+'''
+fig7.add_trace(go.Scatter(
+    x=list(range(15)),
+    y=[0.55 for num in range(15)],
+    fill='toself',
+    fillcolor='red',
+    line_color='red',
+    showlegend=False,
+    name='Good',
+))
+'''
+
+fig7.add_trace(go.Scatter(
+    x= list(range(15)),
+    y = [1 for num in range(15)],
+    mode='lines',
+    name='Good'
+))
+
+fig7.add_trace(go.Scatter(
+    x= list(range(15)),
+    y = [0.55 for num in range(15)],
+    mode='lines',
+    name='Fair'
+))
+
+fig7.add_trace(go.Scatter(
+    x= list(range(15)),
+    y = [0.4 for num in range(15)],
+    mode='lines',
+    name='Poor'
+))
+
+fig7.update_layout(
+title= 'Quality of Transport over Time',
+xaxis_title='Time (secs)',
+yaxis_title='Quality Metric'
+)
+                            ######################
+
 app.layout = html.Div(children=[
     html.H1(children='Demo'),
     dcc.Slider(
@@ -383,6 +468,10 @@ app.layout = html.Div(children=[
     ),
     html.Div(
         id='slider-output-container'
+    ),
+    dcc.Graph(
+        id = 'condition_graph',
+        figure = fig7
     ),
     dcc.Graph(
         id = 'double-temp-graph',
@@ -413,6 +502,7 @@ app.layout = html.Div(children=[
 @app.callback(
     dash.dependencies.Output('slider-output-container', 'children'),
     [dash.dependencies.Input('status_bar', 'value')])
+
 def update_output(value):
     temp_diff = df_temp_data['Object Temperature'] - df_temp_data['Ambient Temperature']
     temp_diff_mean = statistics.mean(temp_diff)
