@@ -411,49 +411,51 @@ for data in range(int(0.5 * df_angletilt_revised1['Time'][len(df_angletilt_revis
     totals.append(condition_graph(data))
 
 fig7 = go.Figure()
-fig7.add_trace(go.Scatter(
-    x = list(range(int(0.5 * df_angletilt_revised1['Time'][len(df_angletilt_revised1) -1] + 1))),
-                    y= totals,
-                    mode='lines',
-                    name='Condition of Travel'
-))
-'''
-fig7.add_trace(go.Scatter(
-    x=list(range(15)),
-    y=[0.55 for num in range(15)],
-    fill='toself',
-    fillcolor='red',
-    line_color='red',
-    showlegend=False,
-    name='Good',
-))
-'''
 
 fig7.add_trace(go.Scatter(
     x= list(range(15)),
     y = [1 for num in range(15)],
+    #hoverinfo ='y',
     mode='lines',
+    line=dict(width=0.45, color='green'),
+    stackgroup='one',
     name='Good'
 ))
+
 
 fig7.add_trace(go.Scatter(
     x= list(range(15)),
     y = [0.55 for num in range(15)],
+    #hoverinfo ='y',
     mode='lines',
+    line=dict(width=0.15, color='yellow'),
+    stackgroup='two',
     name='Fair'
 ))
 
 fig7.add_trace(go.Scatter(
     x= list(range(15)),
     y = [0.4 for num in range(15)],
+    #hoverinfo ='y',
     mode='lines',
+    line=dict(width=0.4, color='red'),
+    stackgroup='three',
     name='Poor'
 ))
+
+fig7.add_trace(go.Scatter(
+    x = list(range(int(0.5 * df_angletilt_revised1['Time'][len(df_angletilt_revised1) -1] + 1))),
+                    y= totals,
+                    mode='lines',
+                    name='Condition of Travel',
+                    line=dict(color='black')
+))
+
 
 fig7.update_layout(
 title= 'Quality of Transport over Time',
 xaxis_title='Time (secs)',
-yaxis_title='Quality Metric'
+yaxis_title='Quality Metric',
 )
                             ######################
 
