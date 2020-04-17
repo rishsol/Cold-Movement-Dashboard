@@ -17,6 +17,8 @@ from sklearn.preprocessing import Normalizer
 
 app = dash.Dash(__name__)
 
+server = app.server
+
 data = 'RawArduinoData.xlsx'
 df_temp_data = pandas.read_excel(data, 'Temp (optical and thermocouple)')
 df_temp_data.dropna(inplace=True)
