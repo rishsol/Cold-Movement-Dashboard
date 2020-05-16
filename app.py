@@ -73,6 +73,35 @@ fig3.add_trace(go.Scatter(x=0.5 * df_temp_data['Reading No.'], y=df_temp_data['A
 fig3.add_trace(go.Scatter(x=0.5 * df_temp_data['Reading No.'], y=df_temp_data['Object Temperature'],
                     mode='lines',
                     name='Object Temperature'))
+
+fig3.add_trace(go.Scatter(
+    x = list(range(len(df_temp_data['Reading No.']) // 2 + 1)),
+    y = [70 for num in range(len(df_temp_data['Reading No.']) // 2 + 1)],
+    mode='lines',
+    line= dict(width = 0.5, color ='green'),
+    name='Max Acceptable Temperature',
+    hoverinfo='skip'
+))
+
+fig3.add_trace(go.Scatter(
+    x= list(range(len(df_temp_data['Reading No.']) // 2 + 1)),
+    y = [65 for num in range(len(df_temp_data['Reading No.']) // 2 + 1)],
+    mode='lines',
+    fill='tonexty',
+    line= dict(width = 0.5, color ='green'),
+    name='Median Acceptable Temperature',
+    hoverinfo='skip'
+))
+
+fig3.add_trace(go.Scatter(
+    x= list(range(len(df_temp_data['Reading No.']) // 2 + 1)),
+    y = [60 for num in range(len(df_temp_data['Reading No.']) // 2 + 1)],
+    mode='lines',
+    fill='tonexty',
+    line= dict(width = 0.5, color ='green'),
+    name='Min Acceptable Temperature',
+    hoverinfo='skip'
+))
                     
 fig3.update_layout(
 title= 'Ambient vs Object Temperature over time',
@@ -289,7 +318,6 @@ title= 'Tilt2',
 xaxis_title='Time (secs)',
 yaxis_title='Angle (degrees)'
 )
-                    
                             
                             ###############
 
@@ -352,14 +380,14 @@ fig6.add_trace(go.Scatter(x = 0.5 * pandas.Series(range(len(df_accelerometer_dat
                     mode='lines+markers',
                     name='Magnitude',
                     marker_color= colorsAcc))
-fig6.add_trace(go.Scatter(x = 0.5 * pandas.Series(range(len(df_accelerometer_data['Y Acc.']))),
-                    y=df_accelerometer_data['Moving Median'],
-                    mode = 'lines',
-                    name = 'Moving Median'))
-fig6.add_trace(go.Scatter(x = 0.5 * pandas.Series(range(len(df_accelerometer_data['Y Acc.']))), 
-                    y=df_accelerometer_data['Moving Average'],
-                    mode = 'lines',
-                    name = 'Moving Average'))
+#fig6.add_trace(go.Scatter(x = 0.5 * pandas.Series(range(len(df_accelerometer_data['Y Acc.']))),
+ #                   y=df_accelerometer_data['Moving Median'],
+  #                  mode = 'lines',
+   #                 name = 'Moving Median'))
+#fig6.add_trace(go.Scatter(x = 0.5 * pandas.Series(range(len(df_accelerometer_data['Y Acc.']))), 
+ #                   y=df_accelerometer_data['Moving Average'],
+  #                  mode = 'lines',
+   #                 name = 'Moving Average'))
 
 fig6.update_layout(
 title= 'Acceleration over time',
@@ -374,32 +402,47 @@ def condition_graph(value):
     temp_diff_mean = statistics.mean(temp_diff)
     temp_diff_sd = statistics.stdev(temp_diff)
 
-    temperature = (temp_diff[value] - temp_diff_mean) / temp_diff_sd
+    max_temp =  df_temp_data['Object Temperature'].max() - 70
+    temperature = (70 - df_temp_data['Object Temperature'][value]) / max_temp
 
-    avg_angle_meanx = statistics.mean(df_angletilt_revised1['X Angle'])
-    avg_angle_sdx = statistics.stdev(df_angletilt_revised1['X Angle'])
+    max_x_angle = df_angletilt_revised1['X Angle'].max()
+    tilt1_anglex =  df_angletilt_revised1['X Angle'][value] / max_x_angle
 
-    tilt1_anglex = (abs(avg_angle_meanx - df_angletilt_revised1['X Angle'][value])) / avg_angle_sdx
+    max_y_angle = df_angletilt_revised1['Y Angle'].max()
+    tilt1_angley =  df_angletilt_revised1['Y Angle'][value] / max_y_angle
 
-    avg_angle_meany = statistics.mean(df_angletilt_revised1['Y Angle'])
-    avg_angle_sdy = statistics.stdev(df_angletilt_revised1['Y Angle'])
+    max_z_angle = df_angletilt_revised1['Z Angle'].max()
+    tilt1_anglez =  df_angletilt_revised1['Z Angle'][value] / max_z_angle
 
-    tilt1_angley = (abs(avg_angle_meany - df_angletilt_revised1['Y Angle'][value])) / avg_angle_sdy
+    max_acc = df_accelerometer_data['Magnitude'].max()
+    acceleration = df_accelerometer_data['Magnitude'][value] / max_acc
 
-    avg_angle_meanz= statistics.mean(df_angletilt_revised1['Z Angle'])
-    avg_angle_sdz = statistics.stdev(df_angletilt_revised1['Z Angle'])
+    #temperature = (temp_diff[value] - temp_diff_mean) / temp_diff_sd
 
-    tilt1_anglez = (abs(avg_angle_meanz - df_angletilt_revised1['Z Angle'][value])) / avg_angle_sdz
+    #avg_angle_meanx = statistics.mean(df_angletilt_revised1['X Angle'])
+    #avg_angle_sdx = statistics.stdev(df_angletilt_revised1['X Angle'])
 
-    acc_avg = statistics.mean(df_accelerometer_data['Magnitude'])
-    acc_sd = statistics.stdev(df_accelerometer_data['Magnitude'])
+    #tilt1_anglex = (abs(avg_angle_meanx - df_angletilt_revised1['X Angle'][value])) / avg_angle_sdx
 
-    acceleration = (abs(acc_avg - df_accelerometer_data['Magnitude'][value])) / acc_sd
+    #avg_angle_meany = statistics.mean(df_angletilt_revised1['Y Angle'])
+    #avg_angle_sdy = statistics.stdev(df_angletilt_revised1['Y Angle'])
 
-    if temperature > 1:
-        total = (0.5 * temperature) + (0.16 * tilt1_anglex) + (0.16 * tilt1_angley) + (0.16 * tilt1_anglez) + (0.02 * acceleration)
-    else:
-        total = (0.5 * 0) + (0.16 * tilt1_anglex) + (0.16 * tilt1_angley) + (0.16 * tilt1_anglez) + (0.02 * acceleration)
+    #tilt1_angley = (abs(avg_angle_meany - df_angletilt_revised1['Y Angle'][value])) / avg_angle_sdy
+
+    #avg_angle_meanz= statistics.mean(df_angletilt_revised1['Z Angle'])
+    #avg_angle_sdz = statistics.stdev(df_angletilt_revised1['Z Angle'])
+
+    #tilt1_anglez = (abs(avg_angle_meanz - df_angletilt_revised1['Z Angle'][value])) / avg_angle_sdz
+
+    #acc_avg = statistics.mean(df_accelerometer_data['Magnitude'])
+    #acc_sd = statistics.stdev(df_accelerometer_data['Magnitude'])
+
+    #acceleration = (abs(acc_avg - df_accelerometer_data['Magnitude'][value])) / acc_sd
+
+    #if temperature > 1:
+    total = (0.5 * temperature) + (0.16 * tilt1_anglex) + (0.16 * tilt1_angley) + (0.16 * tilt1_anglez) + (0.02 * acceleration)
+    #else:
+     #   total = (0.7 * 0) + (0.093 * tilt1_anglex) + (0.093 * tilt1_angley) + (0.093 * tilt1_anglez) + (0.02 * acceleration)
     
     return total
 
@@ -414,29 +457,32 @@ fig7.add_trace(go.Scatter(
     y = [1 for num in range(15)],
     #hoverinfo ='y',
     mode='lines',
-    line=dict(width=0.45, color='green'),
+    line=dict(width=0.33, color='green'),
     stackgroup='one',
+    hoverinfo='skip',
     name='Good'
 ))
 
 
 fig7.add_trace(go.Scatter(
     x= list(range(15)),
-    y = [0.55 for num in range(15)],
+    y = [0.67 for num in range(15)],
     #hoverinfo ='y',
     mode='lines',
-    line=dict(width=0.15, color='yellow'),
+    line=dict(width=0.33, color='yellow'),
     stackgroup='two',
+    hoverinfo='skip',
     name='Fair'
 ))
 
 fig7.add_trace(go.Scatter(
     x= list(range(15)),
-    y = [0.4 for num in range(15)],
+    y = [0.33 for num in range(15)],
     #hoverinfo ='y',
     mode='lines',
-    line=dict(width=0.4, color='red'),
+    line=dict(width=0.33, color='red'),
     stackgroup='three',
+    hoverinfo='skip',
     name='Poor'
 ))
 
