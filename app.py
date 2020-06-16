@@ -530,16 +530,6 @@ yaxis_title='Quality Metric',
 
 app.layout = html.Div(children=[
     html.H1(children='Demo'),
-    dcc.Slider(
-        id='status_bar', 
-        min = 0,
-        max = 0.5 * df_angletilt_revised1['Time'][len(df_angletilt_revised1) -1],
-        step=1,
-        value=0,
-    ),
-    html.Div(
-        id='slider-output-container'
-    ),
     dcc.Graph(
         id = 'product_graph',
         figure = fig8
@@ -573,18 +563,6 @@ app.layout = html.Div(children=[
         figure = fig6
     )
 ])
-
-@app.callback(
-    dash.dependencies.Output('slider-output-container', 'children'),
-    [dash.dependencies.Input('status_bar', 'value')])
-def update_output(value):
-    total =  transport(value)
-    if total < 0.33:
-        return str(value) + ' seconds: Poor condition'
-    elif total < 0.67:
-        return str(value) + ' seconds: Fair condition'
-    else:
-        return str(value) + ' seconds: Good condition'
 
 if __name__ == '__main__':
     app.run_server(debug=True)
