@@ -13,12 +13,6 @@ for i in range(1, 11) :
   kmeans.fit(X)
   wcss.append(kmeans.inertia_)
 
-#plt.plot(range(1, 11), wcss)
-#plt.title('The Elbow Method')
-#plt.xlabel('Number of clusters')
-#plt.ylabel('WCSS')
-#plt.show()
-
 kmeans = KMeans(n_clusters = 2, init = 'k-means++', random_state = 42)
 y_kmeans = kmeans.fit_predict(X)
 
